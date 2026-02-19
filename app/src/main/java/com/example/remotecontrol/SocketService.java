@@ -101,7 +101,7 @@ public class SocketService extends Service {
         super.onCreate();
         Log.i(TAG, "SocketService created");
 
-        // Single-thread executor: connection + heartbeat serial execution
+        // Two-thread pool: one for connection loop, one for heartbeat
         executorService = Executors.newFixedThreadPool(2);
 
         // Initialize singleton managers
@@ -258,8 +258,10 @@ public class SocketService extends Service {
         boolean useTls = configManager.isEncryptionEnabled();
         if (useTls) {
             Log.d(TAG, "Using TLS socket");
-            // Production: validateCert=true. Dev/testing: false allowed
-            socket = encryptionManager.createTlsSocket(serverHost, serverPort, true);
+            // In debug builds, certificate validation can be relaxed for testing.
+            // In release builds, always validate certificates (validateCert=true).
+            boolean validateCert = !BuildConfig.DEBUG;
+            socket = encryptionManager.createTlsSocket(serverHost, serverPort, validateCert);
         } else {
             Log.d(TAG, "Using plain socket (TLS disabled by config)");
             socket = new Socket(serverHost, serverPort);

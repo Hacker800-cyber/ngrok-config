@@ -229,16 +229,18 @@ public class SecurityManager {
 
     /**
      * constantTimeEquals() - timing-attack safe string comparison
-     * दोनों strings की length अलग हो तो भी same time लेता है
+     * 長さの違いも含めてすべてのバイトを比較し、タイミング情報を漏らさない
      */
     private boolean constantTimeEquals(String a, String b) {
         if (a == null || b == null) return false;
-        if (a.length() != b.length()) return false;
-        int result = 0;
-        for (int i = 0; i < a.length(); i++) {
-            result |= a.charAt(i) ^ b.charAt(i);
+        // Use MessageDigest.isEqual which is constant-time even for different lengths
+        try {
+            byte[] aBytes = a.getBytes("UTF-8");
+            byte[] bBytes = b.getBytes("UTF-8");
+            return java.security.MessageDigest.isEqual(aBytes, bBytes);
+        } catch (Exception e) {
+            return false;
         }
-        return result == 0;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

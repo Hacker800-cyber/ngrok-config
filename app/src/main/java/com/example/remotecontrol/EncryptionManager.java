@@ -311,10 +311,10 @@ public class EncryptionManager {
         String[] supported = socket.getSupportedCipherSuites();
         java.util.List<String> secure = new java.util.ArrayList<>();
         for (String suite : supported) {
-            // Weak cipher patterns को skip करें
+            // Weak cipher patterns को skip करें (MD5, RC4, NULL, anon, EXPORT, DES)
             if (suite.contains("_NULL_") || suite.contains("_anon_")
                     || suite.contains("_EXPORT_") || suite.contains("_DES_")
-                    || suite.contains("_RC4_")) {
+                    || suite.contains("_RC4_") || suite.contains("_MD5")) {
                 continue;
             }
             secure.add(suite);

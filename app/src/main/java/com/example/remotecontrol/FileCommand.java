@@ -155,22 +155,21 @@ public class FileCommand extends CommandBase {
             conn.setRequestProperty("Content-Length", String.valueOf(file.length()));
             conn.setFixedLengthStreamingMode(file.length());
 
-            // Stream file to server
-            OutputStream out = conn.getOutputStream();
-            FileInputStream fis = new FileInputStream(file);
-            byte[] buffer = new byte[BUFFER_SIZE];
-            long totalSent = 0;
-            int bytesRead;
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                out.write(buffer, 0, bytesRead);
-                totalSent += bytesRead;
-                if (progressCallback != null) {
-                    progressCallback.onProgress(totalSent, file.length());
+            // Stream file to server using try-with-resources (resource leak prevention)
+            try (FileInputStream fis = new FileInputStream(file);
+                 OutputStream out = conn.getOutputStream()) {
+                byte[] buffer = new byte[BUFFER_SIZE];
+                long totalSent = 0;
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                    totalSent += bytesRead;
+                    if (progressCallback != null) {
+                        progressCallback.onProgress(totalSent, file.length());
+                    }
                 }
+                out.flush();
             }
-            fis.close();
-            out.flush();
-            out.close();
 
             int responseCode = conn.getResponseCode();
             if (responseCode < 200 || responseCode >= 300) {
@@ -272,21 +271,21 @@ public class FileCommand extends CommandBase {
 
             long contentLength = conn.getContentLengthLong();
 
-            InputStream in = conn.getInputStream();
-            FileOutputStream fos = new FileOutputStream(destFile);
-            byte[] buffer = new byte[BUFFER_SIZE];
+            // Use try-with-resources to ensure streams are closed on exception
             long totalReceived = 0;
-            int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1) {
-                fos.write(buffer, 0, bytesRead);
-                totalReceived += bytesRead;
-                if (progressCallback != null) {
-                    progressCallback.onProgress(totalReceived, contentLength);
+            try (InputStream in = conn.getInputStream();
+                 FileOutputStream fos = new FileOutputStream(destFile)) {
+                byte[] buffer = new byte[BUFFER_SIZE];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    fos.write(buffer, 0, bytesRead);
+                    totalReceived += bytesRead;
+                    if (progressCallback != null) {
+                        progressCallback.onProgress(totalReceived, contentLength);
+                    }
                 }
+                fos.flush();
             }
-            fos.flush();
-            fos.close();
-            in.close();
 
             return totalReceived;
 
@@ -301,15 +300,15 @@ public class FileCommand extends CommandBase {
 
     /**
      * validateFilePath() - path traversal attacks prevent करें
-     * केवल /sdcard/ और /data/user/ paths allowed हैं
+     * केवल external storage paths (/sdcard/, /storage/emulated/) allowed हैं।
+     * /data/user/ को exclude किया गया है क्योंकि वहाँ अन्य apps का sensitive data है।
      */
     private void validateFilePath(File file) throws SecurityException {
         String canonicalPath = file.getAbsolutePath();
 
-        // Allowed base paths (adjust as needed for your app)
+        // Only allow external storage paths to prevent access to other apps' data
         boolean allowed = canonicalPath.startsWith("/sdcard/")
-                || canonicalPath.startsWith("/storage/emulated/")
-                || canonicalPath.startsWith("/data/user/");
+                || canonicalPath.startsWith("/storage/emulated/");
 
         if (!allowed) {
             throw new SecurityException(

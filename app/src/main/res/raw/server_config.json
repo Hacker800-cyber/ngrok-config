@@ -1,5 +1,5 @@
 {
-  "_comment": "server-config.json - Remote Control Server Configuration Template",
+  "_comment": "server_config.json - Remote Control Server Configuration Template",
   "_version": "1.0.0",
   "_description": "यह file server द्वारा serve की जाएगी। Client हर 5 minutes पर fetch करेगा।",
 
