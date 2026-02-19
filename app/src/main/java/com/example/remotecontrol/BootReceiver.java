@@ -7,21 +7,16 @@ import android.os.Build;
 import android.util.Log;
 
 /**
- * BootReceiver - Device Boot/Update पर SocketService Auto-Start
+ * BootReceiver - Device Boot पर SocketService Auto-Start
  *
- * यह BroadcastReceiver दो events handle करता है:
- * 1. BOOT_COMPLETED   - Device reboot के बाद SocketService restart
- * 2. MY_PACKAGE_REPLACED - App update के बाद service restart
+ * यह BroadcastReceiver BOOT_COMPLETED event handle करता है:
+ * - BOOT_COMPLETED: Device reboot के बाद SocketService restart
+ *
+ * BOOT_COMPLETED एक "protected broadcast" है जो केवल Android system
+ * send कर सकता है - third-party apps यह broadcast नहीं भेज सकतीं।
  *
  * Required manifest permissions:
  *   android.permission.RECEIVE_BOOT_COMPLETED
- *
- * AndroidManifest.xml में declare होना ज़रूरी है:
- *   <receiver android:name=".BootReceiver" android:exported="true">
- *     <intent-filter>
- *       <action android:name="android.intent.action.BOOT_COMPLETED"/>
- *     </intent-filter>
- *   </receiver>
  */
 public class BootReceiver extends BroadcastReceiver {
 
@@ -31,16 +26,16 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent == null || intent.getAction() == null) return;
 
-        String action = intent.getAction();
-        Log.i(TAG, "Received broadcast: " + action);
-
-        // Handle boot complete और package replace events
-        if (Intent.ACTION_BOOT_COMPLETED.equals(action)
-                || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) {
-
-            Log.i(TAG, "Starting SocketService after: " + action);
-            startSocketService(context);
+        // Verify this is the expected system boot broadcast.
+        // ACTION_BOOT_COMPLETED is a protected broadcast - only the Android system
+        // can send it, so no further sender verification is required.
+        if (!Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+            Log.w(TAG, "Ignoring unexpected action: " + intent.getAction());
+            return;
         }
+
+        Log.i(TAG, "BOOT_COMPLETED received - starting SocketService");
+        startSocketService(context);
     }
 
     /**
