@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AndroidManifest.xml - Remote Control App Manifest
+
+  Required permissions:
+  - INTERNET            : Socket connection के लिए (required)
+  - READ_EXTERNAL_STORAGE: File download read access (API < 33)
+  - WRITE_EXTERNAL_STORAGE: File download write access (API < 29)
+  - READ_MEDIA_IMAGES   : Photo access on API 33+ (replaces READ_EXTERNAL_STORAGE)
+  - CAMERA              : Photo capture commands के लिए
+  - FOREGROUND_SERVICE  : Long-running SocketService के लिए
+  - RECEIVE_BOOT_COMPLETED: Device reboot के बाद service restart के लिए
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.remotecontrol">
+
+    <!-- ─── Network Permissions ─────────────────────────────────────────── -->
+
+    <!-- Socket connection के लिए required -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Network state check (connection available है?) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- ─── File / Storage Permissions ──────────────────────────────────── -->
+
+    <!-- File read access - API level 32 और नीचे के लिए -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- File write access - API level 28 और नीचे के लिए -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <!-- Photo/image read access - API level 33+ (Android 13+) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Video read access - API level 33+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+
+    <!-- ─── Camera Permission ────────────────────────────────────────────── -->
+
+    <!-- Photo capture commands के लिए -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- ─── Service / Background Permissions ─────────────────────────────── -->
+
+    <!-- Long-running background service के लिए required (Android 9+) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- Data sync foreground service type (Android 14+) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- Device boot के बाद auto-start के लिए -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Wake lock - CPU sleep में भी service active रखने के लिए -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <application
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:networkSecurityConfig="@xml/network_security_config">
+
+        <!-- ─── SocketService ─────────────────────────────────────────────── -->
+        <!--
+          foregroundServiceType="dataSync" - Android 14+ requirement
+          exported="false" - other apps इसे start न कर सकें (security)
+        -->
+        <service
+            android:name=".SocketService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- ─── Boot Receiver ─────────────────────────────────────────────── -->
+        <!--
+          Device reboot के बाद SocketService automatically restart करने के लिए
+          exported="true" required है RECEIVE_BOOT_COMPLETED broadcast receive के लिए
+        -->
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

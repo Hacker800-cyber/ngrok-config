@@ -1,0 +1,43 @@
+{
+  "_comment": "server-config.json - Remote Control Server Configuration Template",
+  "_version": "1.0.0",
+  "_description": "यह file server द्वारा serve की जाएगी। Client हर 5 minutes पर fetch करेगा।",
+
+  "heartbeat_interval": 30000,
+  "_heartbeat_interval_doc": "Socket heartbeat frequency in milliseconds. Default: 30000 (30 seconds)",
+
+  "photo_compression": {
+    "quality": 80,
+    "max_width": 1280,
+    "max_height": 720,
+    "_doc": "JPEG quality (0-100), max resolution in pixels. quality=80 = good balance"
+  },
+
+  "auto_upload_interval": 300000,
+  "_auto_upload_interval_doc": "Batch photo upload frequency in milliseconds. Default: 300000 (5 minutes)",
+
+  "enabled_commands": [
+    "ping",
+    "get_info",
+    "log_level",
+    "list_commands",
+    "file_operation"
+  ],
+  "_enabled_commands_doc": "Whitelist of allowed commands. Empty array [] means ALL commands are allowed.",
+
+  "encryption_enabled": true,
+  "_encryption_enabled_doc": "Enable TLS/SSL for socket connection. Set false only for development.",
+
+  "logging_level": "INFO",
+  "_logging_level_doc": "Log verbosity: VERBOSE | DEBUG | INFO | WARN | ERROR",
+
+  "signing_secret": "",
+  "_signing_secret_doc": "HMAC-SHA256 signing secret for request integrity. Leave empty to disable signing.",
+
+  "_notes": [
+    "सभी interval values milliseconds में हैं",
+    "signing_secret production में random 32+ char string होनी चाहिए",
+    "encryption_enabled: true करना strongly recommended है",
+    "enabled_commands: specific commands list करना security के लिए better है"
+  ]
+}
