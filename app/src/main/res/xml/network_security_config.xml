@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  network_security_config.xml - Android Network Security Configuration
+  यह file TLS certificate pinning और cleartext traffic policy define करती है।
+  AndroidManifest.xml में android:networkSecurityConfig="@xml/network_security_config" से reference होती है।
+-->
+<network-security-config>
+
+    <!--
+      Base config: सभी connections के लिए default policy
+      cleartextTrafficPermitted="false" = HTTP (plaintext) block, HTTPS only
+    -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- System CA store trust करें (standard certificates) -->
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+
+    <!--
+      Development/debug domain: local testing के लिए cleartext allow
+      Production में यह block remove कर दें
+    -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
+
+</network-security-config>
